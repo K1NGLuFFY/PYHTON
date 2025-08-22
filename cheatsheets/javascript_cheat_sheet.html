@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Cheat Sheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .cheatsheet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .code-block {
+            background: #f4f4f4;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .example {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .example h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        
+        .method-list {
+            list-style: none;
+        }
+        
+        .method-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .method-list code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .interactive-demo {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        
+        .output {
+            background: #333;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JavaScript Cheat Sheet</h1>
+            <p>Quick reference for modern JavaScript development</p>
+        </div>
+        
+        <div class="cheatsheet-grid">
+            <!-- Variables & Data Types -->
+            <div class="section">
+                <h2>Variables & Data Types</h2>
+                <h3>Variable Declarations</h3>
+                <div class="code-block">
+// ES6+ declarations
+let x = 5;          // Mutable variable
+const y = 10;       // Immutable constant
+var z = 15;         // Function-scoped (avoid in modern JS)
+
+// Data Types
+const string = "Hello World";
+const number = 42;
+const boolean = true;
+const array = [1, 2, 3, 4, 5];
+const object = { name: "John", age: 30 };
+const nullValue = null;
+const undefinedValue = undefined;
+const symbol = Symbol('unique');
+                </div>
+                
+                <h3>Type Checking</h3>
+                <div class="code-block">
+typeof "hello"          // "string"
+typeof 42               // "number"
+typeof true             // "boolean"
+typeof []               // "object"
+typeof null             // "object" (bug!)
+Array.isArray([])       // true
+null === null           // true
+                </div>
+            </div>
+
+            <!-- Arrays -->
+            <div class="section">
+                <h2>Arrays</h2>
+                <h3>Array Methods</h3>
+                <ul class="method-list">
+                    <li><code>push()</code> - Add to end</li>
+                    <li><code>pop()</code> - Remove from end</li>
+                    <li><code>shift()</code> - Remove from start</li>
+                    <li><code>unshift()</code> - Add to start</li>
+                    <li><code>map()</code> - Transform elements</li>
+                    <li><code>filter()</code> - Filter elements</li>
+                    <li><code>reduce()</code> - Reduce to single value</li>
+                    <li><code>find()</code> - Find first match</li>
+                    <li><code>includes()</code> - Check if contains</li>
+                    <li><code>slice()</code> - Extract portion</li>
+                    <li><code>splice()</code> - Add/remove elements</li>
+                </ul>
+                
+                <div class="example">
+                    <h4>Array Examples</h4>
+                    <div class="code-block">
+const numbers = [1, 2, 3, 4, 5];
+
+// Map
+const doubled = numbers.map(n => n * 2); // [2, 4, 6, 8, 10]
+
+// Filter
+const evens = numbers.filter(n => n % 2 === 0); // [2, 4]
+
+// Reduce
+const sum = numbers.reduce((acc, n) => acc + n, 0); // 15
+
+// Find
+const found = numbers.find(n => n > 3); // 4
+                    </div>
+                </div>
+            </div>
+
+            <!-- Objects -->
+            <div class="section">
+                <h2>Objects</h2>
+                <h3>Object Operations</h3>
+                <div class="code-block">
+// Object creation
+const person = {
+    name: "Alice",
+    age: 25,
+    greet() {
+        return `Hello, I'm ${this.name}`;
+    }
+};
+
+// Access properties
+person.name;           // "Alice"
+person['age'];         // 25
+
+// Add/Update properties
+person.email = "alice@email.com";
+person.age = 26;
+
+// Object methods
+Object.keys(person);    // ["name", "age", "email", "greet"]
+Object.values(person);  // ["Alice", 26, "alice@email.com", function]
+Object.entries(person); // [[key, value] pairs]
+
+// Destructuring
+const { name, age } = person;
+const { name: userName, age: userAge } = person;
+                </div>
+            </div>
+
+            <!-- Functions -->
+            <div class="section">
+                <h2>Functions</h2>
+                <h3>Function Types</h3>
+                <div class="code-block">
+// Function declaration
+function greet(name) {
+    return `Hello, ${name}!`;
+}
+
+// Function expression
+const greet = function(name) {
+    return `Hello, ${name}!`;
+};
+
+// Arrow function (ES6)
+const greet = (name) => `Hello, ${name}!`;
+const add = (a, b) => a + b;
+
+// Default parameters
+const greet = (name = "Guest") => `Hello, ${name}!`;
+
+// Rest parameters
+const sum = (...numbers) => numbers.reduce((a, b) => a + b, 0);
+
+// Higher-order functions
+const createMultiplier = (multiplier) => (number) => number * multiplier;
+const double = createMultiplier(2);
+double(5); // 10
+                </div>
+            </div>
+
+            <!-- ES6+ Features -->
+            <div class="section">
+                <h2>ES6+ Features</h2>
+                <h3>Modern JavaScript</h3>
+                <div class="code-block">
+// Template literals
+const name = "World";
+const greeting = `Hello, ${name}!`;
+
+// Spread operator
+const arr1 = [1, 2, 3];
+const arr2 = [...arr1, 4, 5]; // [1, 2, 3, 4, 5]
+
+// Object spread
+const obj1 = { a: 1, b: 2 };
+const obj2 = { ...obj1, c: 3 }; // { a: 1, b: 2, c: 3 }
+
+// Optional chaining
+const user = { profile: { name: "John" } };
+const userName = user?.profile?.name; // "John"
+const userAge = user?.profile?.age; // undefined
+
+// Nullish coalescing
+const value = null ?? "default"; // "default"
+const count = 0 ?? 42; // 0 (not 42!)
+
+// Destructuring with defaults
+const { x = 0, y = 0 } = { x: 5 };
+                </div>
+            </div>
+
+            <!-- Async/Await -->
+            <div class="section">
+                <h2>Async JavaScript</h2>
+                <h3>Promises & Async/Await</h3>
+                <div class="code-block">
+// Promise
+const fetchData = () => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => resolve("Data loaded"), 1000);
+    });
+};
+
+// Using Promise
+fetchData()
+    .then(data => console.log(data))
+    .catch(error => console.error(error));
+
+// Async/Await
+async function loadData() {
+    try {
+        const data = await fetchData();
+        console.log(data);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Multiple async operations
+async function loadMultiple() {
+    const [users, posts] = await Promise.all([
+        fetch('/api/users'),
+        fetch('/api/posts')
+    ]);
+    return { users, posts };
+}
+                </div>
+            </div>
+
+            <!-- DOM Manipulation -->
+            <div class="section">
+                <h2>DOM Manipulation</h2>
+                <h3>Common DOM Methods</h3>
+                <div class="code-block">
+// Select elements
+const element = document.getElementById('myId');
+const elements = document.querySelectorAll('.myClass');
+const firstElement = document.querySelector('.myClass');
+
+// Create elements
+const newDiv = document.createElement('div');
+newDiv.textContent = 'Hello World';
+newDiv.className = 'my-class';
+
+// Modify elements
+element.textContent = 'New text';
+element.innerHTML = '<strong>Bold text</strong>';
+element.style.color = 'blue';
+element.classList.add('active');
+element.classList.remove('inactive');
+element.classList.toggle('visible');
+
+// Event listeners
+element.addEventListener('click', (event) => {
+    console.log('Element clicked!', event.target);
+});
+
+// Remove elements
+element.remove();
+parentElement.removeChild(childElement);
+                </div>
+            </div>
+
+            <!-- String Methods -->
+            <div class="section">
+                <h2>String Methods</h2>
+                <h3>Common String Operations</h3>
+                <div class="code-block">
+const str = "Hello, World!";
+
+// Basic methods
+str.length;                    // 13
+str.toLowerCase();            // "hello, world!"
+str.toUpperCase();            // "HELLO, WORLD!"
+str.trim();                   // Remove whitespace
+str.trimStart();              // Remove leading whitespace
+str.trimEnd();                // Remove trailing whitespace
+
+// Searching
+str.includes("World");        // true
+str.startsWith("Hello");      // true
+str.endsWith("!");            // true
+str.indexOf("o");             // 4
+str.lastIndexOf("o");         // 8
+
+// Extracting
+str.slice(0, 5);              // "Hello"
+str.substring(0, 5);          // "Hello"
+str.substr(7, 5);             // "World"
+str.split(", ");              // ["Hello", "World!"]
+
+// Replacing
+str.replace("World", "JavaScript"); // "Hello, JavaScript!"
+str.replaceAll("l", "L");   // "HeLLo, WorLd!"
+                </div>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="section">
+                <h2>Date & Time</h2>
+                <h3>Working with Dates</h3>
+                <div class="code-block">
+// Create dates
+const now = new Date();
+const specific = new Date('2024-01-15');
+const timestamp = new Date(1704067200000);
+
+// Get date components
+now.getFullYear();    // 2024
+now.getMonth();       // 0-11 (January is 0)
+now.getDate();        // 1-31
+now.getDay();         // 0-6 (Sunday is 0)
+now.getHours();       // 0-23
+now.getMinutes();     // 0-59
+now.getSeconds();     // 0-59
+now.getMilliseconds(); // 0-999
+
+// Formatting
+now.toISOString();    // "2024-01-15T12:00:00.000Z"
+now.toLocaleDateString(); // "1/15/2024"
+now.toLocaleTimeString(); // "12:00:00 PM"
+
+// Date calculations
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+
+const diff = date2.getTime() - date1.getTime(); // milliseconds
+const days = diff / (1000 * 60 * 60 * 24);      // days
+                </div>
+            </div>
+
+            <!-- Error Handling -->
+            <div class="section">
+                <h2>Error Handling</h2>
+                <h3>Try/Catch & Error Types</h3>
+                <div class="code-block">
+// Basic try/catch
+try {
+    // Code that might throw
+    const result = riskyOperation();
+} catch (error) {
+    console.error('Error:', error.message);
+} finally {
+    // Always runs
+    console.log('Cleanup');
+}
+
+// Custom errors
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "ValidationError";
+    }
+}
+
+// Throwing errors
+function validateAge(age) {
+    if (age < 0) {
+        throw new ValidationError("Age cannot be negative");
+    }
+    return true;
+}
+
+// Error boundaries (async)
+async function fetchWithError() {
+    try {
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch failed:', error);
+        throw error;
+    }
+}
+                </div>
+            </div>
+
+            <!-- Local Storage -->
+            <div class="section">
+                <h2>Local Storage</h2>
+                <h3>Browser Storage API</h3>
+                <div class="code-block">
+// Store data
+localStorage.setItem('username', 'john_doe');
+localStorage.setItem('preferences', JSON.stringify({
+    theme: 'dark',
+    language: 'en'
+}));
+
+// Retrieve data
+const username = localStorage.getItem('username');
+const preferences = JSON.parse(localStorage.getItem('preferences') || '{}');
+
+// Remove data
+localStorage.removeItem('username');
+
+// Clear all
+localStorage.clear();
+
+// Check if available
+if (typeof Storage !== 'undefined') {
+    // Local storage is supported
+}
+
+// Session storage (cleared when tab closes)
+sessionStorage.setItem('tempData', '123');
+const temp = sessionStorage.getItem('tempData');
+                </div>
+            </div>
+
+            <!-- Interactive Examples -->
+            <div class="section">
+                <h2>Interactive Examples</h2>
+                
+                <div class="interactive-demo">
+                    <h4>Array Methods Demo</h4>
+                    <input type="text" id="arrayInput" placeholder="Enter numbers (e.g., 1,2,3,4,5)">
+                    <button onclick="doubleArray()">Double</button>
+                    <button onclick="filterEven()">Filter Even</button>
+                    <button onclick="sumArray()">Sum</button>
+                    <div class="output" id="arrayOutput">Result will appear here...</div>
+                </div>
+                
+                <div class="interactive-demo">
+                    <h4>String Methods Demo</h4>
+                    <input type="text" id="stringInput" placeholder="Enter text">
+                    <button onclick="toUpperCase()">UPPERCASE</button>
+                    <button onclick="reverseString()">Reverse</button>
+                    <button onclick="countWords()">Count Words</button>
+                    <div class="output" id="stringOutput">Result will appear here...</div>
+                </div>
+                
+                <div class="interactive-demo">
+                    <h4>Object Demo</h4>
+                    <button onclick="createPerson()">Create Person</button>
+                    <button onclick="showProperties()">Show Properties</button>
+                    <div class="output" id="objectOutput">Click buttons to see object operations...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Interactive demo functions
+        function doubleArray() {
+            const input = document.getElementById('arrayInput').value;
+            const numbers = input.split(',').map(n => parseInt(n.trim()));
+            const doubled = numbers.map(n => n * 2);
+            document.getElementById('arrayOutput').textContent = `Doubled: [${doubled.join(', ')}]`;
+        }
+
+        function filterEven() {
+            const input = document.getElementById('arrayInput').value;
+            const numbers = input.split(',').map(n => parseInt(n.trim()));
+            const evens = numbers.filter(n => n % 2 === 0);
+            document.getElementById('arrayOutput').textContent = `Even numbers: [${evens.join(', ')}]`;
+        }
+
+        function sumArray() {
+            const input = document.getElementById('arrayInput').value;
+            const numbers = input.split(',').map(n => parseInt(n.trim()));
+            const sum = numbers.reduce((a, b) => a + b, 0);
+            document.getElementById('arrayOutput').textContent = `Sum: ${sum}`;
+        }
+
+        function toUpperCase() {
+            const input = document.getElementById('stringInput').value;
+            document.getElementById('stringOutput').textContent = input.toUpperCase();
+        }
+
+        function reverseString() {
+            const input = document.getElementById('stringInput').value;
+            document.getElementById('stringOutput').textContent = input.split('').reverse().join('');
+        }
+
+        function countWords() {
+            const input = document.getElementById('stringInput').value;
+            const wordCount = input.trim().split(/\s+/).filter(word => word.length > 0).length;
+            document.getElementById('stringOutput').textContent = `Word count: ${wordCount}`;
+        }
+
+        function createPerson() {
+            const person = {
+                name: "Alice",
+                age: 30,
+                city: "New York",
+                greet() {
+                    return `Hi, I'm ${this.name} from ${this.city}`;
+                }
+            };
+            document.getElementById('objectOutput').textContent = 
+                `Created: ${JSON.stringify(person, null, 2)}`;
+        }
+
+        function showProperties() {
+            const person = {
+                name: "Alice",
+                age: 30,
+                city: "New York"
+            };
+            const properties = Object.keys(person).join(', ');
+            document.getElementById('objectOutput').textContent = 
+                `Properties: ${properties}`;
+        }
+
+        // Add some dynamic styling
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach((section, index) => {
+                section.style.animationDelay = `${index * 0.1}s`;
+                section.style.animation = 'fadeIn 0.5s ease-in forwards';
+            });
+        });
+    </script>
+</body>
+</html>

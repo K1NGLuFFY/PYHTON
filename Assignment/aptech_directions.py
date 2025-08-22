@@ -1,108 +1,44 @@
-#!/usr/bin/env python3
 """
-Aptech Direction Guide
-A simple Python program to guide users from either Abakpa or Emene to Aptech institution
+A simple guide to get to Aptech from abakpa or emene
 """
+print("=" * 40)
+print("APTECH DIRECTION GUIDE")
+print("=" * 40)
+print("Welcome! This program helps you find your way to Aptech from Abakpa or Emene.\n")
 
-import sys
+print("Where are you coming from?")
+print("1. Abakpa")
+print("2. Emene")
+print("3. Exit")
 
-class AptechDirectionGuide:
-    def __init__(self):
-        self.locations = {
-            "abakpa": {
-                "name": "Abakpa",
-                "directions": [
-                    "From Abakpa Market, head west on Abakpa Road",
-                    "Continue straight for about 2.5km",
-                    "Turn right at the T-junction (Aptech signboard visible)",
-                    "Drive 500m, Aptech will be on your left",
-                    "Landmark: Look for the blue Aptech building with computer graphics"
-                ]
-            },
-            "emene": {
-                "name": "Emene",
-                "directions": [
-                    "From Emene Junction, take the Enugu-Abakaliki Expressway",
-                    "Drive east for approximately 3.2km",
-                    "Turn left at the first major intersection after the fuel station",
-                    "Continue for 800m, Aptech will be on your right",
-                    "Landmark: Opposite the Total filling station"
-                ]
-            }
-        }
-        
-    def display_welcome(self):
-        """Display welcome message and instructions"""
-        print("=" * 50)
-        print("    APTECH DIRECTION GUIDE")
-        print("=" * 50)
-        print("Welcome! This guide will help you reach Aptech")
-        print("institution from either Abakpa or Emene.")
-        print()
-        
-    def get_user_location(self):
-        """Get user's starting location"""
-        while True:
-            print("\nWhere are you coming from?")
-            print("1. Abakpa")
-            print("2. Emene")
-            print("3. Exit")
-            
-            choice = input("\nEnter your choice (1-3): ").strip()
-            
-            if choice == '1':
-                return "abakpa"
-            elif choice == '2':
-                return "emene"
-            elif choice == '3':
-                print("Thank you for using Aptech Direction Guide!")
-                sys.exit(0)
-            else:
-                print("Invalid choice. Please enter 1, 2, or 3.")
-                
-    def display_directions(self, location_key):
-        """Display directions for the selected location"""
-        location = self.locations[location_key]
-        
-        print(f"\n{'='*50}")
-        print(f"DIRECTIONS FROM {location['name'].upper()} TO APTECH")
-        print(f"{'='*50}")
-        
-        for i, direction in enumerate(location['directions'], 1):
-            print(f"{i}. {direction}")
-            
-        print(f"\n{'='*50}")
-        print("Additional Tips:")
-        print("- Journey time: ~15-20 minutes depending on traffic")
-        print("- Alternative route: Use Google Maps for real-time updates")
-        print("- Contact: 0803-123-4567 for further assistance")
-        print(f"{'='*50}")
-        
-    def run(self):
-        """Main program loop"""
-        self.display_welcome()
-        
-        while True:
-            location = self.get_user_location()
-            self.display_directions(location)
-            
-            print("\nWould you like to:")
-            print("1. Get directions from another location")
-            print("2. Exit")
-            
-            choice = input("Enter your choice (1-2): ").strip()
-            
-            if choice == '2':
-                print("Thank you for using Aptech Direction Guide!")
-                break
-            elif choice != '1':
-                print("Invalid choice. Exiting...")
-                break
+choice = input("Enter your choice (1-3): ")
 
-def main():
-    """Main function to run the program"""
-    guide = AptechDirectionGuide()
-    guide.run()
+if choice == "1":
+    print("\nDIRECTIONS FROM ABAKPA TO APTECH:")
+    print("1. From Abakpa Market, head west on Abakpa Road")
+    print("2. Continue straight for about 2.5km")
+    print("3. Turn right at the T-junction (Aptech signboard visible)")
+    print("4. Drive 500m, Aptech will be on your left")
+    print("5. Landmark: Look for the blue Aptech building with computer graphics")
+elif choice == "2":
+    print("\nDIRECTIONS FROM EMENE TO APTECH:")
+    print("1. From Emene Junction, take the Enugu-Abakaliki Expressway")
+    print("2. Drive east for approximately 3.2km")
+    print("3. Turn left at the first major intersection after the fuel station")
+    print("4. Continue for 800m, Aptech will be on your right")
+    print("5. Landmark: Opposite the Total filling station")
+elif choice == "3":
+    print("Thank you for using Aptech Direction Guide!")
+else:
+    print("Invalid choice. Please run the program again and choose 1, 2, or 3.")
 
-if __name__ == "__main__":
-    main()
+print("\nTips:")
+print("- Journey time: about 15-20 minutes depending on traffic")
+print("- You can use Google Maps for real-time updates")
+print("- For help, call: 0803-123-4567")
+
+print("=" * 40)
+print("APTECH DIRECTION GUIDE")
+print("=" * 40)
+print("Welcome! This program helps you find your way to Aptech from Abakpa or Emene.\n")
+

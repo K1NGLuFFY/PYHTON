@@ -1,5 +1,8 @@
-# Simple Password Checker
-# Checks if password is "MR FRANK"
+"""
+Simple Password Checker
+Checks if password is "MR FRANK"
+"""
+
 
 def check_password():
     """Check if the entered password matches 'MR FRANK'"""
