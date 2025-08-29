@@ -1,0 +1,56 @@
+{
+  "IPHONE14": {
+    "product_id": "IPHONE14",
+    "name": "iPhone 14",
+    "price": 999.99,
+    "stock": 50,
+    "category": "Electronics",
+    "description": "Latest Apple smartphone",
+    "last_updated": "2025-08-22T10:30:52.703656"
+  },
+  "AIRPODS": {
+    "product_id": "AIRPODS",
+    "name": "AirPods Pro",
+    "price": 249.99,
+    "stock": 100,
+    "category": "Electronics",
+    "description": "Wireless earbuds",
+    "last_updated": "2025-08-22T10:30:52.703656"
+  },
+  "MACBOOK": {
+    "product_id": "MACBOOK",
+    "name": "MacBook Air",
+    "price": 1299.99,
+    "stock": 25,
+    "category": "Electronics",
+    "description": "Apple laptop",
+    "last_updated": "2025-08-22T10:30:52.703656"
+  },
+  "IPAD": {
+    "product_id": "IPAD",
+    "name": "iPad Pro",
+    "price": 799.99,
+    "stock": 75,
+    "category": "Electronics",
+    "description": "Apple tablet",
+    "last_updated": "2025-08-22T10:30:52.703656"
+  },
+  "APPLEWATCH": {
+    "product_id": "APPLEWATCH",
+    "name": "Apple Watch",
+    "price": 399.99,
+    "stock": 150,
+    "category": "Electronics",
+    "description": "Smart watch",
+    "last_updated": "2025-08-22T10:30:52.703656"
+  },
+  "Mac book M4": {
+    "product_id": "Mac book M4",
+    "name": "Mac Air",
+    "price": 1200.0,
+    "stock": 4,
+    "category": "Apple",
+    "description": "A mac book air laptop",
+    "last_updated": "2025-08-22T10:32:38.721799"
+  }
+}
