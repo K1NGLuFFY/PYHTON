@@ -1,6 +1,7 @@
 """
 A simple grade calculator that assigns letter grades based on numeric scores.
-
+Ask the user to input a score between 0 and 100, then output the corresponding letter grade along with a message.
+And tell the user there score is invalid if the input is out of range or not a number.
 """
 score = input("Enter your score (0-100): ")
 
