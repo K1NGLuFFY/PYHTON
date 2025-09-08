@@ -36,4 +36,4 @@ while True:
         print("\nPassword is weak. Please fix the following issues:")
         for error in errors:
             print(f"- {error}")
-        print() # Add a newline for better readability
+        print()

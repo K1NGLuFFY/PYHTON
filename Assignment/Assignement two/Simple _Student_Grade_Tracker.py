@@ -1,72 +1,30 @@
-"""
-A simple student grade tracker that allows adding students, recording grades,
-calculating averages, and identifying the top student.
-
-"""
-
 students = {}
 
-def add_student(name):
-    try:
-        if not isinstance(name, str) or not name.strip():
-            raise ValueError("Invalid student name.")
-        if name in students:
-            raise ValueError("Student already exists.")
-        students[name] = []
-        print(name + " added.")
-    except Exception as e:
-        print("Error:", e)
-
-def add_grade(name, grade):
-    try:
-        if name not in students:
-            raise KeyError("Student not found.")
-        grade = float(grade)
-        if grade < 0 or grade > 100:
-            raise ValueError("Grade must be between 0 and 100.")
-        students[name].append(grade)
-        print("Added grade " + str(grade) + " for " + name)
-    except ValueError as ve:
-        print("Error:", ve)
-    except KeyError as ke:
-        print("Error:", ke)
-    except Exception:
-        print("Error: Invalid grade value.")
+def add_student(name, grade=None):
+    if not isinstance(name, str) or not name.strip():
+        print("Error: Invalid student name.")
+        return
+    if name in students:
+        print("Error: Student already exists.")
+        return
+    students[name] = []
+    if grade is not None:
+        try:
+            grade = float(grade)
+            if grade < 0 or grade > 100:
+                print("Error: Grade must be between 0 and 100.")
+                return
+            students[name].append(grade)
+        except ValueError:
+            print("Error: Invalid grade value.")
+    print(name + " added.")
 
 def calculate_average(name):
-    try:
-        if name not in students:
-            raise KeyError("Student not found.")
-        if len(students[name]) == 0:
-            print("Warning: No grades recorded for " + name)
-            return 0
-        total = sum(students[name])
-        average = total / len(students[name])
-        return average
-    except KeyError as ke:
-        print("Error:", ke)
+    if name not in students:
         return 0
-    except Exception as e:
-        print("Error:", e)
+    if len(students[name]) == 0:
         return 0
-
-def find_top_student():
-    try:
-        if not students:
-            raise ValueError("No students available.")
-        top_student = None
-        top_average = -1
-        for name in students:
-            avg = calculate_average(name)
-            if avg > top_average:
-                top_average = avg
-                top_student = name
-        if top_student is None:
-            raise ValueError("No grades available to determine top student.")
-        return top_student
-    except Exception as e:
-        print("Error:", e)
-        return None
+    return sum(students[name]) / len(students[name])
 
 def display_students():
     print("--------------------------------------------")
@@ -74,28 +32,29 @@ def display_students():
     print("--------------------------------------------")
     if not students:
         print("No students to display.")
-    for name in students:
-        try:
-            grades = students[name]
-            avg = calculate_average(name)
-            grades_text = ", ".join(str(g) for g in grades)
-            print(name + " " * (15 - len(name)) + "| " + grades_text + " " * (15 - len(grades_text)) + "| " + "{:.2f}".format(avg))
-        except Exception as e:
-            print("Error displaying student:", name, "-", e)
+    for name, grades in students.items():
+        grades_text = ", ".join(str(g) for g in grades)
+        avg = calculate_average(name)
+        print(name + " " * (15 - len(name)) + "| " + grades_text + " " * (15 - len(grades_text)) + "| " + "{:.2f}".format(avg))
     print("--------------------------------------------")
 
-add_student("Alice")
-add_student("Bob")
-add_student("")  # Error example
+# Console menu
+while True:
+    print("\nMenu:")
+    print("1. Add student with grade")
+    print("2. Show all students")
+    print("3. Exit")
 
-add_grade("Alice", 85)
-add_grade("Alice", 90)
-add_grade("Bob", 78)
-add_grade("Bob", 92)
-add_grade("Charlie", 88)  # Error example
-add_grade("Bob", "A+")    # Error example
+    choice = input("Choose an option: ")
 
-display_students()
-
-top = find_top_student()
-print("Top student is: " + str(top))
+    if choice == "1":
+        name = input("Enter student name: ")
+        grade = input("Enter student grade: ")
+        add_student(name, grade)
+    elif choice == "2":
+        display_students()
+    elif choice == "3":
+        print("Goodbye!")
+        break
+    else:
+        print("Invalid choice. Try again.")
