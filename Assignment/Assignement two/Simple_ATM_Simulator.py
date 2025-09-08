@@ -1,5 +1,7 @@
 """
 A simple ATM simulator which starts with a balance of 1000
+It allows the user to check balance, deposit, withdraw, and exit.
+It is a simple text-based interface.
 """
 
 balance = 1000
@@ -16,24 +18,29 @@ while True:
     if choice == "1":
         print(f"Your balance is: ${balance}")
     elif choice == "2":
-        amount = input("Enter deposit amount: ")
-        if amount.isdigit():
+        try:
+            amount = input("Enter deposit amount: ")
             amount = int(amount)
-            balance += amount
-            print(f"Deposit successful! New balance: ${balance}")
-        else:
-            print("Invalid amount.")
+            if amount <= 0:
+                print("Amount must be positive.")
+            else:
+                balance += amount
+                print(f"Deposit successful! New balance: ${balance}")
+        except ValueError:
+            print("Invalid amount. Please enter a number.")
     elif choice == "3":
-        amount = input("Enter withdrawal amount: ")
-        if amount.isdigit():
+        try:
+            amount = input("Enter withdrawal amount: ")
             amount = int(amount)
-            if amount <= balance:
+            if amount <= 0:
+                print("Amount must be positive.")
+            elif amount <= balance:
                 balance -= amount
                 print(f"Transaction successful! New balance: ${balance}")
             else:
                 print("Insufficient funds.")
-        else:
-            print("Invalid amount.")
+        except ValueError:
+            print("Invalid amount. Please enter a number.")
     elif choice == "4":
         print("Thank you for using the ATM. Goodbye!")
         break

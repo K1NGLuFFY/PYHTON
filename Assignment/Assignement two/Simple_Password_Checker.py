@@ -1,5 +1,7 @@
 """
-A simple password checker which checks if a password is strong 
+A simple password checker which checks if a password is strong
+It checks for length, uppercase, lowercase, and numeric characters.
+A user inputs a password and receives feedback on its strength.
 """
 
 while True:
