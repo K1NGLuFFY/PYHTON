@@ -16,13 +16,13 @@ if score.isdigit():
             message = "Good job, keep pushing!"
         elif score >= 70:
             grade = "C"
-            message = "Fair effort, but you can do better."
+            message = "Fair effort"
         elif score >= 60:
             grade = "D"
-            message = "You passed, but work harder next time."
+            message = "You passed"
         else:
             grade = "F"
-            message = "Don’t give up, study harder!"
+            message = "Fail!"
 
         print(f"Your grade is {grade}. {message}")
     else:
