@@ -5,17 +5,20 @@ A user inputs a password and receives feedback on its strength.
 """
 
 while True:
-    password = input("Enter a password (or type 'exit' to quit): ")
+    try:
+        password = input("Enter a password (or type 'exit' to quit): ")
+    except (EOFError, KeyboardInterrupt):
+        print("\nInput interrupted. Exiting password checker. Goodbye!")
+        break
+
     if password.lower() == 'exit':
         print("Exiting password checker. Goodbye!")
         break
 
     errors = []
 
-
     if len(password) < 8:
         errors.append("Password must be at least 8 characters long.")
-
 
     if not any(char.isupper() for char in password):
         errors.append("Password must contain at least one uppercase letter.")
