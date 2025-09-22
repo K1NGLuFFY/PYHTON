@@ -3,7 +3,7 @@ class User:
     # Lastname = "chiemerie"
     # age = 19
     # Gender = "male"
-    # Nationality = "Nigerian"
+    # Nationality = "nigerian"
     # Email = "fake@gmail.com"
     # Phone = "09060495111"
     
@@ -16,8 +16,16 @@ class User:
         self.email = email
         self.phone = phone
 
-# object of the class User
-user1 = User("K1ng", "chiemerie", 19, "male", "Nigerian", "fake@gmail.com", "09060495111")
+"""
+method to return fristname
+"""
+def print_firstname(self):
+    return self.firstname
+
+#obejct of the class user
+userChiemerie = User("chiemerire" , "okafor" , "19" , "male" ,"nigerian" , "fake@gmail.com" , "09060495111")
+print(userChiemerie.firstname)
+
 # user2 = User()
 
 # user1.Lastname = "Okafor"
