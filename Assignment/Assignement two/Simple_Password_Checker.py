@@ -15,6 +15,8 @@ while True:
         print("Exiting password checker. Goodbye!")
         break
 
+def check_password_strength(password):
+    """Checks the strength of a password based on a set of rules."""
     errors = []
 
     if len(password) < 8:
@@ -28,6 +30,7 @@ while True:
 
     if not any(char.isdigit() for char in password):
         errors.append("Password must contain at least one number.")
+    return errors
 
     if not errors:
         print("Password is strong!")
@@ -37,3 +40,29 @@ while True:
         for error in errors:
             print(f"- {error}")
         print()
+def main():
+    """Main function to run the password checker loop."""
+    while True:
+        try:
+            password = input("Enter a password (or type 'exit' to quit): ")
+        except (EOFError, KeyboardInterrupt):
+            print("\nInput interrupted. Exiting password checker. Goodbye!")
+            break
+
+        if password.lower() == 'exit':
+            print("Exiting password checker. Goodbye!")
+            break
+
+        errors = check_password_strength(password)
+
+        if not errors:
+            print("Password is strong!")
+            break
+        else:
+            print("\nPassword is weak. Please fix the following issues:")
+            for error in errors:
+                print(f"- {error}")
+            print()
+
+if __name__ == "__main__":
+    main()

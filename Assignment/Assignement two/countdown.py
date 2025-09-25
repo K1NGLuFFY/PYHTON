@@ -15,8 +15,7 @@ print("Starting countdown from 10 to 1...\n")
 count = 10
 while count > 0:
     print(f" {count}...")
-    time.sleep(1)  # Pause the program for 1 second
     count -= 1
 
-
 print("=== TIMER FINISHED ===")
+

@@ -56,3 +56,47 @@ When run, it displays the results with descriptive text like:
 
 
 choice 
+
+"""
+main.py
+inputmodule- get all the  input - num1 num2 op
+functions module - add division sub mult functions
+logic module - if
+
+
+
+while:
+    inputmodule.getnum1
+    inputmodule.getnum2
+    inputmodule.getop
+
+    logicModule.checkOp(op)
+    
+----------------------------------------
+
+inputmodule
+def getnum1():
+def getnum2():
+def getop():
+---------------------------------------
+
+function module 
+def add
+def sub
+def div
+def mult
+
+-----------------------------------------
+
+logicmodule
+if op.lower == "add":
+    functionmodule.add()
+elif op.lower == "sub":
+    functionmodule.sub()
+elif op.lower == "div":
+    functionmodule.div()
+elif op.lower == "mult":
+    functionmodule.mult()
+else:
+    print("invalid operation")
+"""

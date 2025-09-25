@@ -355,5 +355,6 @@ DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p "$BACKUP_DIR"
 cp *.txt "$BACKUP_DIR/"
 tar -czf "backup_$DATE.tar.gz" "$BACKUP_DIR"
+rm -rf "$BACKUP_DIR"
 find . -name "backup_*.tar.gz" -mtime +7 -delete
 echo "Backup completed: backup_$DATE.tar.gz"
