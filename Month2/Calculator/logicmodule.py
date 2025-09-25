@@ -1,13 +1,13 @@
-import functionmodule
+import functionmodule as fm
 
 def checkOp(op):
     if op.lower() == "add":
-        functionmodule.add()
+        fm.add()
     elif op.lower() == "sub":
-        functionmodule.sub()
+        fm.sub()
     elif op.lower() == "div":
-        functionmodule.div()
+        fm.div()
     elif op.lower() == "mult":
-        functionmodule.mult()
+        fm.mult()
     else:
         print("invalid operation")
