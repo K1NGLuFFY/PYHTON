@@ -2,7 +2,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
@@ -107,10 +107,11 @@ def view_queue() -> None:
         print(f"  {idx:>3}. #{person['id']:<4} {person['name']:<20} joined {format_local(person['joined_at'])}")
 
 
-def find_person(query: str) -> List[Dict[str, Any]]:
+def find_person(query: str) -> Tuple[List[Dict[str, Any]], List[int]]:
     data = load_data()
     queue: List[Dict[str, Any]] = data.get("queue", [])
     history: List[Dict[str, Any]] = data.get("history", [])
+    queue_ids = [p["id"] for p in queue]
 
     results: List[Dict[str, Any]] = []
 
@@ -131,15 +132,17 @@ def find_person(query: str) -> List[Dict[str, Any]]:
             if p["name"].lower() == ql:
                 results.append({"status": "called", **p})
 
-    return results
+    return results, queue_ids
 
 
-def print_person_results(results: List[Dict[str, Any]]) -> None:
+def print_person_results(results: List[Dict[str, Any]], queue_ids: Optional[List[int]] = None) -> None:
     if not results:
         print("No matching person found.")
         return
-    data = load_data()
-    queue_ids = [p["id"] for p in data.get("queue", [])]
+
+    if queue_ids is None:
+        data = load_data()
+        queue_ids = [p["id"] for p in data.get("queue", [])]
 
     for r in results:
         status = r.get("status", "?")
@@ -200,8 +203,8 @@ def menu() -> None:
                 print(f"  #{person['id']} - {person['name']}")
         elif choice == "4":
             q = input("Enter name or ticket #: ").strip()
-            results = find_person(q)
-            print_person_results(results)
+            results, queue_ids = find_person(q)
+            print_person_results(results, queue_ids)
         elif choice == "5":
             confirm = input("Type YES to confirm reset: ").strip()
             reset_all(confirm == "YES")
