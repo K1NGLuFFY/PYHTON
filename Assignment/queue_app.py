@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import sys
@@ -6,6 +7,9 @@ from typing import Dict, Any, List, Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
+
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0
 
 
 def now_utc_iso() -> str:
@@ -31,16 +35,34 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+
+    try:
+        mtime = os.path.getmtime(DATA_FILE)
+    except OSError:
+        mtime = 0
+
+    if _CACHE is None or mtime != _CACHE_MTIME:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            _CACHE = json.load(f)
+        _CACHE_MTIME = mtime
+    return copy.deepcopy(_CACHE)
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache to reflect what we just wrote
+    _CACHE = data
+    try:
+        _CACHE_MTIME = os.path.getmtime(DATA_FILE)
+    except OSError:
+        _CACHE_MTIME = 0
 
 
 def add_person(name: str) -> Dict[str, Any]:
