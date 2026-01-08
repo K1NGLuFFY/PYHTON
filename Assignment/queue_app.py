@@ -7,6 +7,22 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# In-memory cache to avoid reading file if it hasn't changed
+_CACHE_DATA: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
+
+
+def _fast_deep_copy(obj: Any) -> Any:
+    """
+    Faster replacement for copy.deepcopy() for JSON-compatible data.
+    """
+    if isinstance(obj, dict):
+        return {k: _fast_deep_copy(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_fast_deep_copy(v) for v in obj]
+    else:
+        return obj
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -31,16 +47,44 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE_DATA, _CACHE_MTIME
+    try:
+        mtime = os.path.getmtime(DATA_FILE)
+        # If cache is valid and file hasn't changed, return a deep copy
+        # to ensure the cache is not mutated by the caller.
+        if _CACHE_DATA is not None and mtime == _CACHE_MTIME:
+            return _fast_deep_copy(_CACHE_DATA)
+    except OSError:
+        # File likely missing
+        pass
+
     ensure_data_file()
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        _CACHE_DATA = json.load(f)
+
+    # Update mtime after read
+    try:
+        _CACHE_MTIME = os.path.getmtime(DATA_FILE)
+    except OSError:
+        _CACHE_MTIME = 0.0
+
+    return _fast_deep_copy(_CACHE_DATA)
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE_DATA, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache to reflect what we just wrote
+    # Store a copy so subsequent modifications by the caller don't corrupt the cache
+    _CACHE_DATA = _fast_deep_copy(data)
+    try:
+        _CACHE_MTIME = os.path.getmtime(DATA_FILE)
+    except OSError:
+        _CACHE_MTIME = 0.0
 
 
 def add_person(name: str) -> Dict[str, Any]:
