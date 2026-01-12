@@ -7,6 +7,10 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# In-memory cache for read optimization
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -30,24 +34,75 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
-def load_data() -> Dict[str, Any]:
-    ensure_data_file()
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+def _shallow_copy_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Creates a shallow copy of the data structure, including shallow copying
+    the mutable lists ('queue' and 'history').
+    This is much faster than copy.deepcopy() and safe for this application
+    because inner dictionary elements are treated as immutable (replaced, not modified in-place).
+    """
+    new_data = data.copy()
+    if "queue" in new_data:
+        new_data["queue"] = new_data["queue"][:]
+    if "history" in new_data:
+        new_data["history"] = new_data["history"][:]
+    return new_data
+
+
+def load_data(mutable: bool = True) -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
+
+    try:
+        current_mtime = os.path.getmtime(DATA_FILE)
+    except OSError:
+        ensure_data_file()
+        current_mtime = os.path.getmtime(DATA_FILE)
+
+    # Reload if cache is empty or file changed on disk
+    if _CACHE is None or current_mtime != _CACHE_MTIME:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            _CACHE = json.load(f)
+        _CACHE_MTIME = current_mtime
+
+    if mutable:
+        # Return a safe copy for mutation
+        return _shallow_copy_data(_CACHE)
+
+    # Return direct reference for read-only speed
+    return _CACHE
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
+
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
+
+    # Write to disk
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache immediately to prevent stale reads on fast subsequent operations
+    # We update _CACHE to reflect what we just wrote.
+    # We use _shallow_copy_data to ensure _CACHE owns its structure.
+    _CACHE = _shallow_copy_data(data)
+
+    # Update mtime to match the file we just wrote (or close to it)
+    # This ensures that a subsequent load_data() calls see the mtime match
+    # and use our fresh cache instead of reloading.
+    # Note: There's a tiny race condition where external modification happens
+    # between write and getmtime, but for this app it's acceptable.
+    try:
+        _CACHE_MTIME = os.path.getmtime(DATA_FILE)
+    except OSError:
+        _CACHE_MTIME = 0
 
 
 def add_person(name: str) -> Dict[str, Any]:
     name = name.strip()
     if not name:
         raise ValueError("Name cannot be empty.")
-    data = load_data()
+    data = load_data(mutable=True)
     ticket_id = data.get("next_id", 1)
     entry = {
         "id": ticket_id,
@@ -61,13 +116,17 @@ def add_person(name: str) -> Dict[str, Any]:
 
 
 def call_next() -> Optional[Dict[str, Any]]:
-    data = load_data()
+    data = load_data(mutable=True)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     if not queue:
         return None
+    # safe: queue is a shallow copy of the list.
     person = queue.pop(0)
+
+    # safe: create a new dict. original person dict in cache is untouched.
     person_called = dict(person)
     person_called["called_at"] = now_utc_iso()
+
     data.setdefault("history", []).append(person_called)
     data["queue"] = queue
     save_data(data)
@@ -75,7 +134,7 @@ def call_next() -> Optional[Dict[str, Any]]:
 
 
 def get_position(ticket_id: int) -> Optional[int]:
-    data = load_data()
+    data = load_data(mutable=False)
     for idx, p in enumerate(data.get("queue", []), start=1):
         if p["id"] == ticket_id:
             return idx
@@ -83,7 +142,7 @@ def get_position(ticket_id: int) -> Optional[int]:
 
 
 def view_queue() -> None:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     count = len(queue)
     print("")
@@ -108,7 +167,7 @@ def view_queue() -> None:
 
 
 def find_person(query: str) -> List[Dict[str, Any]]:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     history: List[Dict[str, Any]] = data.get("history", [])
 
@@ -138,7 +197,7 @@ def print_person_results(results: List[Dict[str, Any]]) -> None:
     if not results:
         print("No matching person found.")
         return
-    data = load_data()
+    data = load_data(mutable=False)
     queue_ids = [p["id"] for p in data.get("queue", [])]
 
     for r in results:

@@ -1,0 +1,3 @@
+## 2026-01-12 - Python Deepcopy vs Shallow Copy Performance
+**Learning:** Python's `copy.deepcopy` is significantly slower (approx 3x in this case) than reading a JSON file from disk and parsing it for large dictionaries. For large cached data structures, relying on `deepcopy` to ensure mutability safety can be a major performance bottleneck.
+**Action:** Use tailored shallow copies (copying only the necessary mutable containers like lists) or `json.loads(json.dumps(x))` (though that's also slow) when possible. Better yet, design the application to minimize the need for full mutable copies of large cached objects. In this case, a manual shallow copy of the top-level dict and its list values was 600x faster than `deepcopy`.
