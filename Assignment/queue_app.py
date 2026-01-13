@@ -30,17 +30,52 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
-def load_data() -> Dict[str, Any]:
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0
+
+
+def _shallow_copy_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Creates a shallow copy of the data, including lists."""
+    new_data = data.copy()
+    if "queue" in data:
+        new_data["queue"] = list(data["queue"])
+    if "history" in data:
+        new_data["history"] = list(data["history"])
+    return new_data
+
+
+def load_data(mutable: bool = True) -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+
+    try:
+        mtime = os.path.getmtime(DATA_FILE)
+    except OSError:
+        mtime = 0
+
+    if _CACHE is None or mtime != _CACHE_MTIME:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            _CACHE = json.load(f)
+        _CACHE_MTIME = mtime
+
+    if mutable:
+        return _shallow_copy_data(_CACHE)
+    return _CACHE
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    try:
+        _CACHE_MTIME = os.path.getmtime(DATA_FILE)
+        _CACHE = _shallow_copy_data(data)
+    except OSError:
+        _CACHE = None
+        _CACHE_MTIME = 0
 
 
 def add_person(name: str) -> Dict[str, Any]:
@@ -75,7 +110,7 @@ def call_next() -> Optional[Dict[str, Any]]:
 
 
 def get_position(ticket_id: int) -> Optional[int]:
-    data = load_data()
+    data = load_data(mutable=False)
     for idx, p in enumerate(data.get("queue", []), start=1):
         if p["id"] == ticket_id:
             return idx
@@ -83,7 +118,7 @@ def get_position(ticket_id: int) -> Optional[int]:
 
 
 def view_queue() -> None:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     count = len(queue)
     print("")
@@ -108,7 +143,7 @@ def view_queue() -> None:
 
 
 def find_person(query: str) -> List[Dict[str, Any]]:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     history: List[Dict[str, Any]] = data.get("history", [])
 
@@ -138,7 +173,7 @@ def print_person_results(results: List[Dict[str, Any]]) -> None:
     if not results:
         print("No matching person found.")
         return
-    data = load_data()
+    data = load_data(mutable=False)
     queue_ids = [p["id"] for p in data.get("queue", [])]
 
     for r in results:
