@@ -7,6 +7,9 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -30,17 +33,50 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
+def _safe_copy_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Creates a safe deep copy of the queue data structure."""
+    new_data = data.copy()
+    if "queue" in new_data:
+        new_data["queue"] = [d.copy() for d in new_data["queue"]]
+    if "history" in new_data:
+        new_data["history"] = [d.copy() for d in new_data["history"]]
+    return new_data
+
+
 def load_data() -> Dict[str, Any]:
     ensure_data_file()
+    global _CACHE, _CACHE_MTIME
+
+    try:
+        mtime = os.path.getmtime(DATA_FILE)
+        if _CACHE is not None and mtime == _CACHE_MTIME:
+            return _safe_copy_data(_CACHE)
+    except OSError:
+        pass
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        # Get mtime from the open file descriptor to ensure consistency
+        stat_result = os.fstat(f.fileno())
+        data = json.load(f)
+        _CACHE_MTIME = stat_result.st_mtime
+
+    _CACHE = data
+
+    return _safe_copy_data(_CACHE)
 
 
 def save_data(data: Dict[str, Any]) -> None:
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
+
+    global _CACHE, _CACHE_MTIME
+
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+        f.flush()
+        _CACHE_MTIME = os.fstat(f.fileno()).st_mtime
+
+    _CACHE = _safe_copy_data(data)
 
 
 def add_person(name: str) -> Dict[str, Any]:
