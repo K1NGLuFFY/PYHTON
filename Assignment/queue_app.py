@@ -7,6 +7,15 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# In-memory cache to reduce disk I/O
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
+
+
+def _deep_copy_json(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Fast deep copy for JSON-serializable data."""
+    return json.loads(json.dumps(data))
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -30,24 +39,55 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
-def load_data() -> Dict[str, Any]:
+def load_data(mutable: bool = False) -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    try:
+        stat_res = os.stat(DATA_FILE)
+        current_mtime = stat_res.st_mtime
+    except OSError:
+        current_mtime = 0
+
+    # If cache is valid and file hasn't changed, return data
+    if _CACHE is not None and current_mtime == _CACHE_MTIME:
+        if mutable:
+            return _deep_copy_json(_CACHE)
+        return _CACHE
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+        _CACHE = data
+        _CACHE_MTIME = current_mtime
+        if mutable:
+            return _deep_copy_json(data)
+        return data
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+        # Use default separators (compact) to speed up IO and reduce size
+        json.dump(data, f)
+
+    # Update cache so next read is fast
+    try:
+        stat_res = os.stat(DATA_FILE)
+        _CACHE_MTIME = stat_res.st_mtime
+    except OSError:
+        _CACHE_MTIME = 0
+
+    # Update cache (assume ownership)
+    _CACHE = data
 
 
 def add_person(name: str) -> Dict[str, Any]:
     name = name.strip()
     if not name:
         raise ValueError("Name cannot be empty.")
-    data = load_data()
+    data = load_data(mutable=True)
     ticket_id = data.get("next_id", 1)
     entry = {
         "id": ticket_id,
@@ -61,7 +101,7 @@ def add_person(name: str) -> Dict[str, Any]:
 
 
 def call_next() -> Optional[Dict[str, Any]]:
-    data = load_data()
+    data = load_data(mutable=True)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     if not queue:
         return None
