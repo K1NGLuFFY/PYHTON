@@ -7,6 +7,15 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# Global cache to avoid re-reading file if it hasn't changed
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
+
+
+def _deep_copy_json(data: Any) -> Any:
+    """Fast deep copy for JSON-serializable data."""
+    return json.loads(json.dumps(data))
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -30,17 +39,40 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
-def load_data() -> Dict[str, Any]:
+def load_data(mutable: bool = True) -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+
+    try:
+        current_mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        current_mtime = 0
+
+    if _CACHE is None or current_mtime != _CACHE_MTIME:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            _CACHE = json.load(f)
+            # Use fstat on the open file to get the exact mtime of the read content
+            _CACHE_MTIME = os.fstat(f.fileno()).st_mtime
+
+    if mutable:
+        # Return a deep copy so modifications don't affect the cache or other callers
+        return _deep_copy_json(_CACHE)
+
+    # Return the direct reference for read-only access (much faster)
+    return _CACHE
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+        f.flush()
+        # Update cache to reflect what we just wrote, so next load doesn't hit disk
+        # Use deep copy to prevent cache corruption if caller modifies 'data' afterwards
+        _CACHE = _deep_copy_json(data)
+        _CACHE_MTIME = os.fstat(f.fileno()).st_mtime
 
 
 def add_person(name: str) -> Dict[str, Any]:
@@ -75,7 +107,7 @@ def call_next() -> Optional[Dict[str, Any]]:
 
 
 def get_position(ticket_id: int) -> Optional[int]:
-    data = load_data()
+    data = load_data(mutable=False)
     for idx, p in enumerate(data.get("queue", []), start=1):
         if p["id"] == ticket_id:
             return idx
@@ -83,7 +115,7 @@ def get_position(ticket_id: int) -> Optional[int]:
 
 
 def view_queue() -> None:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     count = len(queue)
     print("")
@@ -108,7 +140,7 @@ def view_queue() -> None:
 
 
 def find_person(query: str) -> List[Dict[str, Any]]:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     history: List[Dict[str, Any]] = data.get("history", [])
 
@@ -138,7 +170,7 @@ def print_person_results(results: List[Dict[str, Any]]) -> None:
     if not results:
         print("No matching person found.")
         return
-    data = load_data()
+    data = load_data(mutable=False)
     queue_ids = [p["id"] for p in data.get("queue", [])]
 
     for r in results:
