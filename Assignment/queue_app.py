@@ -1,11 +1,15 @@
 import json
 import os
 import sys
+import copy
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
+
+# Global cache for read-through caching
+_CACHE = {"mtime": 0.0, "data": None}
 
 
 def now_utc_iso() -> str:
@@ -32,8 +36,23 @@ def ensure_data_file() -> None:
 
 def load_data() -> Dict[str, Any]:
     ensure_data_file()
+
+    try:
+        current_mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        current_mtime = 0
+
+    # Return cached data if file hasn't changed
+    if _CACHE["data"] is not None and _CACHE["mtime"] == current_mtime:
+        return copy.deepcopy(_CACHE["data"])
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    _CACHE["data"] = copy.deepcopy(data)
+    _CACHE["mtime"] = current_mtime
+
+    return data
 
 
 def save_data(data: Dict[str, Any]) -> None:
@@ -41,6 +60,15 @@ def save_data(data: Dict[str, Any]) -> None:
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache with the new data to prevent reload
+    try:
+        new_mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        new_mtime = 0
+
+    _CACHE["data"] = copy.deepcopy(data)
+    _CACHE["mtime"] = new_mtime
 
 
 def add_person(name: str) -> Dict[str, Any]:
