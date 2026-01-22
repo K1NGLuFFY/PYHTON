@@ -1,11 +1,16 @@
 import json
 import os
 import sys
+import copy
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
+
+# Global cache to avoid reading file on every operation
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
 
 
 def now_utc_iso() -> str:
@@ -31,16 +36,45 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    try:
+        current_mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        current_mtime = 0.0
+
+    # Return cached data if file hasn't changed
+    if _CACHE is not None and current_mtime == _CACHE_MTIME:
+        return copy.deepcopy(_CACHE)
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+        _CACHE = copy.deepcopy(data)
+        _CACHE_MTIME = current_mtime
+        return data
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
+
+    # Update cache first to ensure it's fresh for subsequent reads
+    # We use deepcopy to prevent outside modification of the cache
+    _CACHE = copy.deepcopy(data)
+
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+        # Flush to ensure data is written
+        f.flush()
+        os.fsync(f.fileno())
+
+    # Update mtime after write so we know this version is current
+    try:
+        _CACHE_MTIME = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        _CACHE_MTIME = 0.0
 
 
 def add_person(name: str) -> Dict[str, Any]:
