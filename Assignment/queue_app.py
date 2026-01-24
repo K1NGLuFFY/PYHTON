@@ -7,6 +7,17 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+_CACHE = {}
+
+
+def _clone_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a fast deep copy of the queue data structure."""
+    return {
+        "next_id": data.get("next_id", 1),
+        "queue": [d.copy() for d in data.get("queue", [])],
+        "history": [d.copy() for d in data.get("history", [])]
+    }
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -32,8 +43,20 @@ def ensure_data_file() -> None:
 
 def load_data() -> Dict[str, Any]:
     ensure_data_file()
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        mtime = 0
+
+    if _CACHE.get("mtime") == mtime and "data" in _CACHE:
+        return _clone_data(_CACHE["data"])
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    _CACHE["mtime"] = mtime
+    _CACHE["data"] = data
+    return _clone_data(data)
 
 
 def save_data(data: Dict[str, Any]) -> None:
@@ -41,6 +64,15 @@ def save_data(data: Dict[str, Any]) -> None:
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+        _CACHE["mtime"] = mtime
+        _CACHE["data"] = _clone_data(data)
+    except OSError:
+        pass
 
 
 def add_person(name: str) -> Dict[str, Any]:
