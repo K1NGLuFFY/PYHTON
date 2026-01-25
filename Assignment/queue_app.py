@@ -7,6 +7,10 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# Cache globals
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -22,6 +26,19 @@ def format_local(dt_iso: str) -> str:
         return dt_iso
 
 
+def _clone_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Creates a deep copy of the queue data structure.
+    Manual copy is used for performance reasons over copy.deepcopy.
+    """
+    new_data = data.copy()
+    if "queue" in data:
+        new_data["queue"] = [d.copy() for d in data["queue"]]
+    if "history" in data:
+        new_data["history"] = [d.copy() for d in data["history"]]
+    return new_data
+
+
 def ensure_data_file() -> None:
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
@@ -31,16 +48,44 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    try:
+        current_mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        # File might not exist or be accessible, ensure_data_file handles creation but race conditions exist
+        current_mtime = 0
+
+    if _CACHE is not None and _CACHE_MTIME == current_mtime:
+        return _clone_data(_CACHE)
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    _CACHE = data
+    _CACHE_MTIME = current_mtime
+    return _clone_data(data)
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
+
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+
+    # Update cache to avoid reload
+    try:
+        new_mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        new_mtime = 0
+
+    _CACHE = _clone_data(data)
+    _CACHE_MTIME = new_mtime
 
 
 def add_person(name: str) -> Dict[str, Any]:
