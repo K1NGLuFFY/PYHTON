@@ -7,6 +7,28 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# Global cache to reduce file I/O
+_CACHE: Optional[Dict[str, Any]] = None
+_LAST_MTIME: float = 0.0
+
+
+def _clone_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Creates a deep copy of the data structure.
+    Manual copying is significantly faster than copy.deepcopy for this specific structure.
+    """
+    # Shallow copy first to preserve any unknown keys
+    new_data = data.copy()
+
+    # Manually deep copy known mutable structures
+    # We use .get() locally or just iterate if present, but since we copied, keys exist.
+    if "queue" in new_data:
+        new_data["queue"] = [p.copy() for p in new_data["queue"]]
+    if "history" in new_data:
+        new_data["history"] = [p.copy() for p in new_data["history"]]
+
+    return new_data
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -31,16 +53,44 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _LAST_MTIME
     ensure_data_file()
+
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        mtime = 0
+
+    # Return cached data if file hasn't changed
+    if _CACHE is not None and mtime == _LAST_MTIME:
+        return _clone_data(_CACHE)
+
+    # Load from disk
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    # Update cache
+    _CACHE = _clone_data(data)
+    _LAST_MTIME = mtime
+
+    return data
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _LAST_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+
+    # Update cache to avoid immediate reload
+    _CACHE = _clone_data(data)
+    try:
+        _LAST_MTIME = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        _LAST_MTIME = 0
 
 
 def add_person(name: str) -> Dict[str, Any]:
