@@ -7,6 +7,10 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# Global cache to reduce disk I/O
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -30,17 +34,55 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
+def _clone_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Creates a deep copy of the data structure.
+    Manual copy is faster than copy.deepcopy for this specific structure.
+    """
+    new_data = data.copy()
+    if "queue" in new_data:
+        new_data["queue"] = [dict(p) for p in new_data["queue"]]
+    if "history" in new_data:
+        new_data["history"] = [dict(p) for p in new_data["history"]]
+    return new_data
+
+
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        mtime = 0
+
+    if _CACHE is not None and mtime == _CACHE_MTIME:
+        return _clone_data(_CACHE)
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    _CACHE = data
+    _CACHE_MTIME = mtime
+    return _clone_data(data)
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
+
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache with the new data to avoid immediate re-read
+    # We clone it so that subsequent modifications to 'data' in the caller
+    # don't affect the cache until next save.
+    _CACHE = _clone_data(data)
+    try:
+        _CACHE_MTIME = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        _CACHE_MTIME = 0
 
 
 def add_person(name: str) -> Dict[str, Any]:
