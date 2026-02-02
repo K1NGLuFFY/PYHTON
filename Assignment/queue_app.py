@@ -7,6 +7,26 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# In-memory cache
+_CACHE = None
+_CACHE_MTIME = 0
+
+
+def _clone_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Fast deep copy of the queue data structure.
+    Faster than copy.deepcopy or json.loads(json.dumps()).
+    """
+    new_data = data.copy()
+    # Shallow copy the lists is sufficient if elements are immutable or replaced wholesale,
+    # but the elements are dicts. We need to copy those dicts too.
+    # The dicts inside contain strings/ints (immutable).
+    if "queue" in data:
+        new_data["queue"] = [item.copy() for item in data["queue"]]
+    if "history" in data:
+        new_data["history"] = [item.copy() for item in data["history"]]
+    return new_data
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -31,16 +51,40 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        mtime = 0
+
+    if _CACHE is not None and mtime == _CACHE_MTIME:
+        return _clone_data(_CACHE)
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    _CACHE = _clone_data(data)
+    _CACHE_MTIME = mtime
+    return data
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache immediately to avoid re-read on next call
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        mtime = 0
+
+    _CACHE = _clone_data(data)
+    _CACHE_MTIME = mtime
 
 
 def add_person(name: str) -> Dict[str, Any]:
