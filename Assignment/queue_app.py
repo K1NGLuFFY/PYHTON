@@ -7,6 +7,23 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+# Global cache variables
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0
+
+
+def _clone_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Manually clone the data structure (dict with lists of dicts)
+    to avoid the overhead of copy.deepcopy.
+    """
+    new_data = data.copy()
+    if "queue" in data:
+        new_data["queue"] = [d.copy() for d in data["queue"]]
+    if "history" in data:
+        new_data["history"] = [d.copy() for d in data["history"]]
+    return new_data
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -31,16 +48,39 @@ def ensure_data_file() -> None:
 
 
 def load_data() -> Dict[str, Any]:
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    try:
+        mtime = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        mtime = 0
+
+    # Return cached data if file hasn't changed
+    if _CACHE is not None and mtime == _CACHE_MTIME:
+        return _clone_data(_CACHE)
+
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    _CACHE = data
+    _CACHE_MTIME = mtime
+    return _clone_data(_CACHE)
 
 
 def save_data(data: Dict[str, Any]) -> None:
+    global _CACHE, _CACHE_MTIME
     if not os.path.isdir(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+    # Update cache to avoid immediate re-read
+    _CACHE = _clone_data(data)
+    try:
+        _CACHE_MTIME = os.stat(DATA_FILE).st_mtime
+    except OSError:
+        _CACHE_MTIME = 0
 
 
 def add_person(name: str) -> Dict[str, Any]:
