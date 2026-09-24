@@ -7,6 +7,9 @@ from typing import Dict, Any, List, Optional
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 DATA_FILE = os.path.join(DATA_DIR, "queue.json")
 
+_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_MTIME: float = 0.0
+
 
 def now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -30,8 +33,33 @@ def ensure_data_file() -> None:
         save_data(default)
 
 
-def load_data() -> Dict[str, Any]:
+def load_data(mutable: bool = True) -> Dict[str, Any]:
+    """
+    Loads data from the JSON file.
+    If mutable is False, it may return a cached read-only reference (fastest).
+    If mutable is True, it returns a fresh mutable copy (standard speed).
+    """
+    global _CACHE, _CACHE_MTIME
     ensure_data_file()
+
+    # Optimized read-only path
+    if not mutable:
+        try:
+            current_mtime = os.path.getmtime(DATA_FILE)
+        except OSError:
+            current_mtime = 0
+
+        if _CACHE is not None and current_mtime == _CACHE_MTIME:
+            return _CACHE
+
+        # Reload cache
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            _CACHE = json.load(f)
+            _CACHE_MTIME = current_mtime
+        return _CACHE
+
+    # Standard mutable path (always reload to ensure fresh copy and safety)
+    # Using json.load is faster than deep copying a large cache structure in Python
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -75,7 +103,7 @@ def call_next() -> Optional[Dict[str, Any]]:
 
 
 def get_position(ticket_id: int) -> Optional[int]:
-    data = load_data()
+    data = load_data(mutable=False)
     for idx, p in enumerate(data.get("queue", []), start=1):
         if p["id"] == ticket_id:
             return idx
@@ -83,7 +111,7 @@ def get_position(ticket_id: int) -> Optional[int]:
 
 
 def view_queue() -> None:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     count = len(queue)
     print("")
@@ -108,7 +136,7 @@ def view_queue() -> None:
 
 
 def find_person(query: str) -> List[Dict[str, Any]]:
-    data = load_data()
+    data = load_data(mutable=False)
     queue: List[Dict[str, Any]] = data.get("queue", [])
     history: List[Dict[str, Any]] = data.get("history", [])
 
@@ -138,7 +166,7 @@ def print_person_results(results: List[Dict[str, Any]]) -> None:
     if not results:
         print("No matching person found.")
         return
-    data = load_data()
+    data = load_data(mutable=False)
     queue_ids = [p["id"] for p in data.get("queue", [])]
 
     for r in results:
